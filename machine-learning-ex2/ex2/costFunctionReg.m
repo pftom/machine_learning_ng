@@ -17,7 +17,14 @@ grad = zeros(size(theta));
 %               Compute the partial derivatives and set grad to the partial
 %               derivatives of the cost w.r.t. each parameter in theta
 
+h_theta_X = 1 ./ (1 + e .^ (- X * theta));
 
+regulariztion_part = (lambda / (2 * m)) * (theta' * theta - theta(1)^2); 
+
+J = (1 / m) * (-y' * log(h_theta_X) - (1 - y)' * log(1 - h_theta_X)) + regulariztion_part;
+
+grad = (1 / m) * X' * (h_theta_X - y) + (lambda / m) * theta;
+grad(1) = grad(1) - (lambda / m) * theta(1);
 
 
 
