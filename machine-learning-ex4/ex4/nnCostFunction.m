@@ -62,40 +62,55 @@ Theta2_grad = zeros(size(Theta2));
 %               and Theta2_grad from Part 2.
 %
 
+% compute the activations value for each layer
+% the input layer
+a1 = [ones(m, 1), X];
 
-K = num_labels;
+% the hidden layer
+z2 = a1 * Theta1';
+a2 = [ones(m, 1), sigmoid(z2)];
 
-temp_X = [ones(m, 1), X];
-z_2 = temp_X * Theta1';
-a_2 = sigmoid(z_2);
+% the output layer
+z3 = a2 * Theta2';
+a3 = sigmoid(z3);
+h_theta_x = a3;
 
-temp_a_2 = [ones(m, 1), a_2];
-z_3 = temp_a_2 * Theta2';
-a_3 = sigmoid(z_3);
-
-h_theta_X = a_3;
-
-
+% let y_k be logical array of y
 y_k = zeros(m, num_labels);
-for k = 1:K,
-    y_k(:, k) = y == k;
+for k = 1:num_labels,
+    y_k(:, k) = (y == k);
 
-sum_section = -log(h_theta_X) .* y_k - log(1 - h_theta_X) .* (1 - y_k);
+% implement J without regularization
+unregulariztion_sum_item = -log( h_theta_x ) .* y_k - ...
+                    log( 1 - h_theta_x ) .* (1 - y_k);
+J = (1 / m) * sum( sum( unregulariztion_sum_item, 2 ) );
 
-J_unregularization_term = (1 / m) * sum(sum(sum_section, 2));
+% erase Theta1(0) and Theta2(0) which is not need for regularization
+regularization_Theta1 = Theta1(:, 2:end);
+regularization_Theta2 = Theta2(:, 2:end);
 
-temp_Theta1 = Theta1(:, 2:end);
-temp_Theta2 = Theta2(:, 2:end);
+% add regulariztion term for J
+regularization_term = sum( sum( regularization_Theta1 .^2 ) ) + ...
+            sum( sum( regularization_Theta2 .^2 ) );
+J = J + ( lambda / ( 2 * m ) ) * regularization_term;
 
-regularization_term = (lambda / (2 * m)) * (sum(sum(temp_Theta1 .^2)) + sum(sum(temp_Theta2 .^2)));
-J = J_unregularization_term + regularization_term;
+% compute delta3 and delta2
+delta3 = a3 - y_k;
+delta2 = delta3 * regularization_Theta2 .* sigmoidGradient(z2);
+
+% compute Theta1_grad and Theta2_grad without regularization term
+DELTA1 = delta2' * a1;
+Theta1_grad = (1 / m) * DELTA1;
+
+DELTA2 = delta3' * a2;
+Theta2_grad = (1 / m) * DELTA2;
+
+% add the regularization term for grad
+Theta1_grad(:, 2:end) = Theta1_grad(:, 2:end) + (lambda / m) * Theta1(:, 2:end);
+Theta2_grad(:, 2:end) = Theta2_grad(:, 2:end) + (lambda / m) * Theta2(:, 2:end);
 
 
-delta_3 = a_3 - y_k;
-delta_2 = delta_3 * temp_Theta2 .* sigmoidGradient(z_2);
 
-Theta2_grad = (1 / m) * (Theta2_grad + delta_3' * temp_a_2);
-Theta1_grad = (1 / m) * (Theta1_grad + delta_2' * temp_X);
 
 
 
